@@ -78,7 +78,7 @@ func (endpoint *WebsocketEndpoint) Handle(ws *websocket.Conn) {
 	ws.PayloadType = websocket.BinaryFrame
 
 	var buf = make([]byte, 1024 * 64)
-	var session *Session = NewSession()
+	var session Session = NewBasicSession()
 
 	fmt.Printf("New session: %s\n", session.ID())
 
@@ -113,7 +113,7 @@ func (endpoint *WebsocketEndpoint) Handle(ws *websocket.Conn) {
 }
 
 
-func (endpoint *WebsocketEndpoint) HandleAPI(buf []byte, session *Session, ws *websocket.Conn) {
+func (endpoint *WebsocketEndpoint) HandleAPI(buf []byte, session Session, ws *websocket.Conn) {
 	var data APIData
 	var resolver = msgpack.DefaultDecoderContainerResolver
 	resolver.MapType = reflect.TypeOf(make(APIData))

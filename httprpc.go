@@ -9,18 +9,30 @@ import (
 	"encoding/json"
 )
 
+type SessionResolver func(*http.Request) Session
+
 type HttpRpcEndpoint struct {
 	Address string
 	listener net.Listener
 	context ServerContext
+	resolver SessionResolver
 }
 
 
-func NewHttpRpcEndpoint(address string, context ServerContext) Endpoint {
+func NewHttpRpcEndpoint(address string, context ServerContext, resolver SessionResolver) Endpoint {
+	if resolver == nil {
+		resolver = DefaultSessionResolver
+	}
 	return &HttpRpcEndpoint{
 		Address: address,
 		context: context,
+		resolver: resolver,
 	}
+}
+
+func DefaultSessionResolver(req *http.Request) Session {
+	// XXX TODO: Session tracking
+	return NewBasicSession()
 }
 
 func (endpoint *HttpRpcEndpoint) Start() bool {
@@ -77,8 +89,7 @@ func (endpoint *HttpRpcEndpoint) ServeHTTP(response http.ResponseWriter, req *ht
 		form[k] = v[0]
 	}
 
-	// XXX TODO: Session tracking
-	var session = NewSession()
+	var session = endpoint.resolver(req)
 
 	ok, errors, resp := endpoint.context.API().HandleCall(
 		bits[0], bits[1], form, session, endpoint.context)

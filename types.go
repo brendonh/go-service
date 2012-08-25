@@ -28,12 +28,17 @@ type User interface {
 	DisplayName() string
 }
 
-type Session struct {
+type Session interface {
+	ID() string
+	User() User
+	SetUser(User)
+}
+
+type BasicSession struct {
 	id string
 	user User
 	*sync.Mutex
 }
-
 
 // ------------------------------------------
 // API
@@ -63,7 +68,7 @@ type APIMethod struct {
 
 type APIData map[string]interface{}
 
-type APIHandler func(APIData, *Session, ServerContext) (bool, APIData)
+type APIHandler func(APIData, Session, ServerContext) (bool, APIData)
 
 
 // ------------------------------------------
@@ -78,6 +83,6 @@ type APIService interface {
 
 type API interface {
 	AddService(APIService)
-	HandleRequest(APIData, *Session, ServerContext) APIData
-	HandleCall(string, string, APIData, *Session, ServerContext) (bool, []string, APIData)
+	HandleRequest(APIData, Session, ServerContext) APIData
+	HandleCall(string, string, APIData, Session, ServerContext) (bool, []string, APIData)
 }

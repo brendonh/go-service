@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 )
 
-type SessionResolver func(*http.Request) Session
+type SessionResolver func(*http.Request, ServerContext) (Session, error)
 
 type HttpRpcEndpoint struct {
 	Address string
@@ -30,9 +30,9 @@ func NewHttpRpcEndpoint(address string, context ServerContext, resolver SessionR
 	}
 }
 
-func DefaultSessionResolver(req *http.Request) Session {
+func DefaultSessionResolver(req *http.Request, context ServerContext) (Session, error) {
 	// XXX TODO: Session tracking
-	return NewBasicSession()
+	return NewBasicSession(), nil
 }
 
 func (endpoint *HttpRpcEndpoint) Start() bool {
@@ -89,7 +89,13 @@ func (endpoint *HttpRpcEndpoint) ServeHTTP(response http.ResponseWriter, req *ht
 		form[k] = v[0]
 	}
 
-	var session = endpoint.resolver(req)
+	var session, err = endpoint.resolver(req, endpoint.context)
+	if err != nil {
+		response.WriteHeader(400)
+		response.Header().Add("Content-Type", "text/plain")
+		response.Write([]byte(fmt.Sprintf("Session rejected: %s", err.Error())))
+		return
+	}
 
 	ok, errors, resp := endpoint.context.API().HandleCall(
 		bits[0], bits[1], form, session, endpoint.context)

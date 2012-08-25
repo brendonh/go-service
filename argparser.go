@@ -2,6 +2,7 @@ package goservice
 
 import (
 	"fmt"
+	"strconv"
 	"container/list"
 )
 
@@ -59,8 +60,15 @@ func convertArgVal(arg APIArg, val interface{}) (
 	}()
 	switch arg.ArgType {
 	case IntArg:
-		var floatval float64 = val.(float64)
-		return true, nil, int(floatval);
+		switch val.(type) {
+		case float64:
+			return true, nil, int(val.(float64))
+		case string:
+			i, err := strconv.ParseInt(val.(string), 10, 64)
+			if err == nil {
+				return true, nil, int(i)
+			}
+		}
 	case FloatArg:
 		return true, nil, val.(float64)
 	case StringArg:

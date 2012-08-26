@@ -32,6 +32,9 @@ type Session interface {
 	ID() string
 	User() User
 	SetUser(User)
+
+	Lock()
+	Unlock()
 }
 
 type BasicSession struct {

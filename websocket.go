@@ -12,18 +12,26 @@ import (
 	"code.google.com/p/go.net/websocket"
 )
 
+type MessageHandler func(*WebsocketEndpoint, []byte, Session, *websocket.Conn)
+
 type WebsocketEndpoint struct {
 	Address string
 	listener net.Listener
 	context ServerContext
+	Handler MessageHandler
 }
 
 
-func NewWebsocketEndpoint(address string, context ServerContext) Endpoint {
+func NewWebsocketEndpoint(address string, context ServerContext) *WebsocketEndpoint {
 	return &WebsocketEndpoint{
 		Address: address,
 		context: context,
+		Handler: DefaultMessageHandler,
 	}
+}
+
+func DefaultMessageHandler(endpoint *WebsocketEndpoint, buf []byte, session Session, conn *websocket.Conn) {
+	endpoint.HandleAPI(buf, session, conn)
 }
 
 func (endpoint *WebsocketEndpoint) Start() bool {
@@ -68,12 +76,6 @@ func (endpoint *WebsocketEndpoint) Stop() bool {
 }
 
 
-const (
-	APIFrame = 'a'
-	PositionFrame = 'p'
-	PingFrame = 'P'
-)
-
 func (endpoint *WebsocketEndpoint) Handle(ws *websocket.Conn) {
 	ws.PayloadType = websocket.BinaryFrame
 
@@ -98,17 +100,10 @@ func (endpoint *WebsocketEndpoint) Handle(ws *websocket.Conn) {
 			continue
 		}
 
-		var msgBuf = make([]byte, msgLength-1)
-		copy(msgBuf, buf[1:])
+		var msgBuf = make([]byte, msgLength)
+		copy(msgBuf, buf)
 
-		switch buf[0] {
-		case APIFrame:
-			go endpoint.HandleAPI(msgBuf, session, ws)
-		case PositionFrame:
-			fmt.Printf("Position frame: %v\n", msgBuf)
-		default:
-			fmt.Printf("Unknown frame: %v\n", msgBuf)
-		}
+		endpoint.Handler(endpoint, msgBuf, session, ws)
 	}
 }
 

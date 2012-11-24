@@ -16,17 +16,19 @@ type MessageHandler func(*WebsocketEndpoint, []byte, Session, *websocket.Conn)
 
 type WebsocketEndpoint struct {
 	Address string
+	Handler MessageHandler
+
 	listener net.Listener
 	context ServerContext
-	Handler MessageHandler
 }
 
 
 func NewWebsocketEndpoint(address string, context ServerContext) *WebsocketEndpoint {
 	return &WebsocketEndpoint{
 		Address: address,
-		context: context,
 		Handler: DefaultMessageHandler,
+		context: context,
+
 	}
 }
 
@@ -80,7 +82,7 @@ func (endpoint *WebsocketEndpoint) Handle(ws *websocket.Conn) {
 	ws.PayloadType = websocket.BinaryFrame
 
 	var buf = make([]byte, 1024 * 64)
-	var session Session = NewBasicSession()
+	var session Session = endpoint.context.CreateSession()
 
 	fmt.Printf("New session: %s\n", session.ID())
 

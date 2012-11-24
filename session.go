@@ -17,6 +17,10 @@ func NewBasicSession() *BasicSession {
 }
 
 
+func BasicSessionCreator() Session {
+	return NewBasicSession()
+}
+
 // ------------------------------------------
 // Session API
 // ------------------------------------------

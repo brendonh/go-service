@@ -32,7 +32,7 @@ func NewHttpRpcEndpoint(address string, context ServerContext, resolver SessionR
 
 func DefaultSessionResolver(req *http.Request, context ServerContext) (Session, error) {
 	// XXX TODO: Session tracking
-	return NewBasicSession(), nil
+	return context.CreateSession(), nil
 }
 
 func (endpoint *HttpRpcEndpoint) Start() bool {

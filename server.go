@@ -6,14 +6,17 @@ import (
 
 type Server struct {
 	services API
+
+	sessionCreator SessionCreator
 	endpoints []Endpoint
 
 	stopper chan os.Signal
 }
 
-func NewServer(services API) *Server {
+func NewServer(services API, sessionCreator SessionCreator) *Server {
 	return &Server {
 		services: services,
+		sessionCreator: sessionCreator,
 		endpoints: make([]Endpoint, 0),
 	}
 }
@@ -41,4 +44,8 @@ func (server *Server) Stop() {
 
 func (server *Server) API() API {
 	return server.services
+}
+
+func (server *Server) CreateSession() Session {
+	return server.sessionCreator()
 }

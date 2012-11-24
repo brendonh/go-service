@@ -11,6 +11,7 @@ import (
 
 type ServerContext interface {
 	API() API
+	CreateSession() Session
 }
 
 type Endpoint interface {
@@ -37,11 +38,14 @@ type Session interface {
 	Unlock()
 }
 
+type SessionCreator func() Session
+
 type BasicSession struct {
 	id string
 	user User
 	*sync.Mutex
 }
+
 
 // ------------------------------------------
 // API

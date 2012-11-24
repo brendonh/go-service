@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 )
 
-type SessionResolver func(*http.Request, ServerContext) (Session, error)
+type SessionResolver func(*http.Request, *HttpRpcEndpoint) (Session, error)
 
 type HttpRpcEndpoint struct {
 	Address string
@@ -30,9 +30,9 @@ func NewHttpRpcEndpoint(address string, context ServerContext, resolver SessionR
 	}
 }
 
-func DefaultSessionResolver(req *http.Request, context ServerContext) (Session, error) {
+func DefaultSessionResolver(req *http.Request, endpoint *HttpRpcEndpoint) (Session, error) {
 	// XXX TODO: Session tracking
-	return context.CreateSession(), nil
+	return endpoint.context.CreateSession(endpoint), nil
 }
 
 func (endpoint *HttpRpcEndpoint) Start() bool {
@@ -89,7 +89,7 @@ func (endpoint *HttpRpcEndpoint) ServeHTTP(response http.ResponseWriter, req *ht
 		form[k] = v[0]
 	}
 
-	var session, err = endpoint.resolver(req, endpoint.context)
+	var session, err = endpoint.resolver(req, endpoint)
 	if err != nil {
 		response.WriteHeader(400)
 		response.Header().Add("Content-Type", "text/plain")
@@ -104,7 +104,7 @@ func (endpoint *HttpRpcEndpoint) ServeHTTP(response http.ResponseWriter, req *ht
 		response.WriteHeader(400)
 	}
 
-	response.Header().Add("Content-Type", "text/plain")
+	response.Header().Add("Content-Type", "application/json")
 
 	jsonReply, _ := json.Marshal(Response(ok, errors, resp))
 	response.Header().Add("Content-Length", strconv.Itoa(len(jsonReply)))

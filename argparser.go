@@ -61,6 +61,12 @@ func convertArgVal(arg APIArg, val interface{}) (
 	switch arg.ArgType {
 	case IntArg:
 		switch val.(type) {
+		case int8:
+			return true, nil, int(val.(int8))
+		case int16:
+			return true, nil, int(val.(int16))
+		case int32:
+			return true, nil, int(val.(int32))
 		case float64:
 			return true, nil, int(val.(float64))
 		case string:

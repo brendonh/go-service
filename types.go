@@ -11,7 +11,7 @@ import (
 
 type ServerContext interface {
 	API() API
-	CreateSession() Session
+	CreateSession(Endpoint) Session
 }
 
 type Endpoint interface {
@@ -34,15 +34,18 @@ type Session interface {
 	User() User
 	SetUser(User)
 
+	Send([]byte)
+	
 	Lock()
 	Unlock()
 }
 
-type SessionCreator func() Session
+type SessionCreator func(Endpoint) Session
 
 type BasicSession struct {
 	id string
 	user User
+	endpoint Endpoint
 	*sync.Mutex
 }
 

@@ -28,11 +28,12 @@ func NewWebsocketEndpoint(address string, context ServerContext) *WebsocketEndpo
 		Address: address,
 		Handler: DefaultMessageHandler,
 		context: context,
-
 	}
 }
 
-func DefaultMessageHandler(endpoint *WebsocketEndpoint, buf []byte, session Session, conn *websocket.Conn) {
+func DefaultMessageHandler(
+	endpoint *WebsocketEndpoint, buf []byte, 
+	session Session, conn *websocket.Conn) {
 	endpoint.HandleAPI(buf, session, conn)
 }
 
@@ -82,7 +83,7 @@ func (endpoint *WebsocketEndpoint) Handle(ws *websocket.Conn) {
 	ws.PayloadType = websocket.BinaryFrame
 
 	var buf = make([]byte, 1024 * 64)
-	var session Session = endpoint.context.CreateSession()
+	var session Session = endpoint.context.CreateSession(endpoint)
 
 	fmt.Printf("New session: %s\n", session.ID())
 
@@ -110,7 +111,9 @@ func (endpoint *WebsocketEndpoint) Handle(ws *websocket.Conn) {
 }
 
 
-func (endpoint *WebsocketEndpoint) HandleAPI(buf []byte, session Session, ws *websocket.Conn) {
+func (endpoint *WebsocketEndpoint) HandleAPI(
+	buf []byte, session Session, ws *websocket.Conn) {
+
 	var data APIData
 	var resolver = msgpack.DefaultDecoderContainerResolver
 	resolver.MapType = reflect.TypeOf(make(APIData))
@@ -124,7 +127,8 @@ func (endpoint *WebsocketEndpoint) HandleAPI(buf []byte, session Session, ws *we
 		return
 	}
 
-	var response = endpoint.context.API().HandleRequest(data, session, endpoint.context)
+	var response = endpoint.context.API().HandleRequest(
+		data, session, endpoint.context)
 
 	if id, ok := data["id"]; ok {
 		response["id"] = id

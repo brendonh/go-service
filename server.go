@@ -46,6 +46,6 @@ func (server *Server) API() API {
 	return server.services
 }
 
-func (server *Server) CreateSession() Session {
-	return server.sessionCreator()
+func (server *Server) CreateSession(endpoint Endpoint) Session {
+	return server.sessionCreator(endpoint)
 }

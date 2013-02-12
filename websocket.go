@@ -14,6 +14,7 @@ import (
 
 type MessageHandler func(*WebsocketEndpoint, []byte, Session, *websocket.Conn)
 
+
 type WebsocketEndpoint struct {
 	Address string
 	Handler MessageHandler
@@ -31,11 +32,30 @@ func NewWebsocketEndpoint(address string, context ServerContext) *WebsocketEndpo
 	}
 }
 
+
+type WebsocketSessionConnection struct {
+	conn *websocket.Conn
+}
+
+func (sessConn *WebsocketSessionConnection) Send(msg []byte) {
+	var n, err = sessConn.conn.Write(msg)
+	if err != nil {
+		fmt.Printf("Websocket write error: %v\n", err)
+	}
+	if n != len(msg) {
+		fmt.Printf("Partial websocket write: %d / %d\n", n, len(msg))
+	}		
+	fmt.Printf("Wrote %d bytes to websocket\n", n)
+}
+
+
 func DefaultMessageHandler(
 	endpoint *WebsocketEndpoint, buf []byte, 
 	session Session, conn *websocket.Conn) {
 	endpoint.HandleAPI(buf, session, conn)
 }
+
+
 
 func (endpoint *WebsocketEndpoint) Start() bool {
 	if endpoint.listener != nil {
@@ -83,7 +103,11 @@ func (endpoint *WebsocketEndpoint) Handle(ws *websocket.Conn) {
 	ws.PayloadType = websocket.BinaryFrame
 
 	var buf = make([]byte, 1024 * 64)
-	var session Session = endpoint.context.CreateSession(endpoint)
+
+	var sessConn = &WebsocketSessionConnection{
+		conn: ws,
+	}
+	var session Session = endpoint.context.CreateSession(sessConn)
 
 	fmt.Printf("New session: %s\n", session.ID())
 

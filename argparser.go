@@ -15,6 +15,7 @@ func Parse(argspec []APIArg, args APIData) (
 	for _, arg := range argspec {
 		
 		givenVal, ok := args[arg.Name]
+
 		if !ok {
 			if arg.Default != nil {
 				parsedArgs[arg.Name] = arg.Default
@@ -75,6 +76,32 @@ func convertArgVal(arg APIArg, val interface{}) (
 				return true, nil, int(i)
 			}
 		}
+
+	case UIntArg:
+		var uval int
+		switch val.(type) {
+		case int8:
+			uval = int(val.(int8))
+		case int16:
+			uval = int(val.(int16))
+		case int32:
+			uval = int(val.(int32))
+		case float64:
+			uval = int(val.(float64))
+		case string:
+			ival, err := strconv.ParseInt(val.(string), 10, 64)
+			if err != nil {
+				return false, nil, nil
+			}
+			uval = int(ival)
+		}
+		if uval < 0 {
+			var errors = list.New()
+			errors.PushBack("Must be >= 0")
+			return false, errors, nil
+		}
+		return true, nil, uval
+
 	case FloatArg:
 		return true, nil, val.(float64)
 	case StringArg:
@@ -93,6 +120,7 @@ func convertArgVal(arg APIArg, val interface{}) (
 func stringArgType(argType int) string {
 	switch argType {
 	case IntArg: return "int"
+	case UIntArg: return "uint"
 	case FloatArg: return "float"
 	case StringArg: return "string"
 	case NestedArg: return "nested"

@@ -8,18 +8,13 @@ import (
 )
 
 
-func NewBasicSession(endpoint Endpoint) *BasicSession {
+func BasicSessionCreator(sessConn SessionConnection) Session {
 	return &BasicSession {
 		id: uuid.New(),
 		user: nil,
 		Mutex: new(sync.Mutex),
-		endpoint: endpoint,
+		connection: sessConn,
 	}
-}
-
-
-func BasicSessionCreator(endpoint Endpoint) Session {
-	return NewBasicSession(endpoint)
 }
 
 // ------------------------------------------
@@ -40,5 +35,5 @@ func (session *BasicSession) SetUser(user User) {
 }
 
 func (session *BasicSession) Send(msg []byte) {
-	fmt.Printf("Session send: %s: %v\n", session.id, msg)
+	session.connection.Send(msg)
 }

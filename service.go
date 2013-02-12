@@ -51,6 +51,9 @@ func (service *Service) FindMethod(methodName string) *APIMethod {
 	return &method
 }
 
+func (service *Service) GetMethods() map[string]APIMethod {
+	return service.Methods
+}
 
 // ------------------------------------------
 // Collections
@@ -66,6 +69,10 @@ var requestArgSpec = []APIArg {
 	APIArg{Name: "data", ArgType: RawArg},
 }
 
+func (collection *ServiceCollection) GetServices() map[string]APIService {
+	return collection.Services
+}
+
 func (collection ServiceCollection) HandleRequest(request APIData, session Session, context ServerContext) APIData {
 
 	ok, resolutionErrors, args := Parse(requestArgSpec, request)
@@ -78,7 +85,6 @@ func (collection ServiceCollection) HandleRequest(request APIData, session Sessi
 		args["method"].(string),
 		args["data"].(APIData),
 		session, context))
-
 }
 
 func (collection ServiceCollection) HandleCall(

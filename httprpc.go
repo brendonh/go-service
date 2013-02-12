@@ -16,6 +16,7 @@ type HttpRpcEndpoint struct {
 	listener net.Listener
 	context ServerContext
 	resolver SessionResolver
+	logPrefix string
 }
 
 
@@ -27,12 +28,23 @@ func NewHttpRpcEndpoint(address string, context ServerContext, resolver SessionR
 		Address: address,
 		context: context,
 		resolver: resolver,
+		logPrefix: "HTTP " + address,
 	}
 }
 
+
+type HttpSessionConnection struct {
+}
+
+func (sessConn *HttpSessionConnection) Send(msg []byte) {
+	fmt.Printf("HTTP session send: %v\n", msg)
+}
+
+
 func DefaultSessionResolver(req *http.Request, endpoint *HttpRpcEndpoint) (Session, error) {
-	// XXX TODO: Session tracking
-	return endpoint.context.CreateSession(endpoint), nil
+	// XXX TODO: Session tracking, sending
+	var sender = &HttpSessionConnection{}
+	return endpoint.context.CreateSession(sender), nil
 }
 
 func (endpoint *HttpRpcEndpoint) Start() bool {
@@ -42,7 +54,7 @@ func (endpoint *HttpRpcEndpoint) Start() bool {
 
 	listener, error := net.Listen("tcp", endpoint.Address)
 	if error != nil {
-		fmt.Printf("Error starting HTTP RPC endpoint: %v\n", error)
+		endpoint.Log("Error starting HTTP RPC endpoint: %v", error)
 		return false
 	}
 
@@ -53,7 +65,7 @@ func (endpoint *HttpRpcEndpoint) Start() bool {
 	mux.Handle("/", endpoint)
 	go http.Serve(listener, mux)
 
-	fmt.Printf("HTTP endpoint started at %s\n", endpoint.Address)
+	endpoint.Log("HTTP endpoint started at %s", endpoint.Address)
 
 	return true
 }
@@ -65,7 +77,7 @@ func (endpoint *HttpRpcEndpoint) Stop() bool {
 	}
 
 	if error := endpoint.listener.Close(); error != nil {
-		fmt.Printf("Error stopping HTTP RPC endpoint: %v\n", error)
+		endpoint.Log("Error stopping HTTP RPC endpoint: %v", error)
 		return false
 	}
 
@@ -73,6 +85,9 @@ func (endpoint *HttpRpcEndpoint) Stop() bool {
 	return true
 }
 
+func (endpoint *HttpRpcEndpoint) Log(fmt string, args... interface{}) {
+	endpoint.context.LogPrefix(endpoint.logPrefix, fmt, args...)
+}
 
 func (endpoint *HttpRpcEndpoint) ServeHTTP(response http.ResponseWriter, req *http.Request) {
 	bits := strings.SplitN(req.URL.Path[1:], "/", 2)

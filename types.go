@@ -11,7 +11,9 @@ import (
 
 type ServerContext interface {
 	API() API
-	CreateSession(Endpoint) Session
+	CreateSession(SessionConnection) Session
+	Log(string, ...interface{})
+	LogPrefix(string, string, ...interface{})
 }
 
 type Endpoint interface {
@@ -34,19 +36,23 @@ type Session interface {
 	User() User
 	SetUser(User)
 
-	Send([]byte)
+	Send([] byte)
 	
 	Lock()
 	Unlock()
 }
 
-type SessionCreator func(Endpoint) Session
+type SessionConnection interface {
+	Send([]byte)
+}	
+
+type SessionCreator func(SessionConnection) Session
 
 type BasicSession struct {
 	id string
 	user User
-	endpoint Endpoint
 	*sync.Mutex
+	connection SessionConnection
 }
 
 
@@ -56,6 +62,7 @@ type BasicSession struct {
 
 const (
 	IntArg = iota
+	UIntArg
 	FloatArg
 	StringArg
 	NestedArg
@@ -88,11 +95,14 @@ type APIHandler func(APIData, Session, ServerContext) (bool, APIData)
 type APIService interface {
 	Name() string
 	AddMethod(string, []APIArg, APIHandler)
+	GetMethods() map[string]APIMethod
 	FindMethod(string) *APIMethod
 }
 
 type API interface {
 	AddService(APIService)
+	GetServices() map[string]APIService
 	HandleRequest(APIData, Session, ServerContext) APIData
 	HandleCall(string, string, APIData, Session, ServerContext) (bool, []string, APIData)
+
 }

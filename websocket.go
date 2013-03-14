@@ -98,6 +98,9 @@ func (endpoint *WebsocketEndpoint) Stop() bool {
 	return true
 }
 
+func (endpoint *WebsocketEndpoint) Context() ServerContext {
+	return endpoint.context
+}
 
 func (endpoint *WebsocketEndpoint) Handle(ws *websocket.Conn) {
 	ws.PayloadType = websocket.BinaryFrame

@@ -15,12 +15,15 @@ type Server struct {
 	stopper chan os.Signal
 }
 
-func NewServer(services API, sessionCreator SessionCreator) *Server {
+func NewServer(services API, sessionCreator SessionCreator, logger *log.Logger) *Server {
+	if logger == nil {
+		logger = log.New(os.Stdout, "", log.LstdFlags)
+	}
 	return &Server {
 		services: services,
 		sessionCreator: sessionCreator,
 		endpoints: make([]Endpoint, 0),
-		logger: log.New(os.Stdout, "", log.LstdFlags),
+		logger: logger,
 	}
 }
 
